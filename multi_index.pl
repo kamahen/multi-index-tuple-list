@@ -3,7 +3,9 @@
 %% Create a list of tuples and efficiently lookup, insert, delete
 %% items.
 
-:- module(multi_index, [xrb_visit/2, rb_visit_ge/3]).
+:- module(multi_index, [xrb_visit/2,
+                        rb_visit_ge/3,
+                        rb_lookup_ge/4]).
 
 :- encoding(utf8).
 
@@ -42,6 +44,8 @@ index_portray(Rbtree) :-
     rb_visit(Rbtree, Pairs),
     format('~p', [rbtree:Pairs]).
 
+% Rewrite rb_visit/2 using DCGs:
+
 xrb_visit(t(_,T),Lf) :-
     phrase(visit(T),Lf).
 
@@ -55,6 +59,7 @@ visit(black(L,K,V,R)) --> !,
     [K-V],
     visit(R).
 
+% New predicate: rb_visit_ge/3.
 
 rb_visit_ge(t(_,T),Lf, Key0) :-
     phrase(visit_ge(T, Key0), Lf).
@@ -74,3 +79,42 @@ visit_ge(black(L,K,V,R), Key0) --> !,
     ;   []
     ),
     visit_ge(R, Key0).
+
+% New predicate: rb_lookup_ge/4
+
+rb_lookup_ge(_Key, _KeyFound, _Val, t(black('', A, B, ''), black('', A, B, ''))) => fail.
+rb_lookup_ge(Key, KeyFound, Val, T) =>
+    rb_max(T, KA,VA),
+    Key @=< KA,
+    T = t(_,Tree),
+    lookup_ge(Key, KeyFound, Val, Tree, KA,VA).
+
+% lookup_ge(+Key, -KeyFound, -Val, +Tree, +KBest, +VBest)
+%   KBest-VBest are the best key-value found so far
+
+lookup_ge(_Key, KeyFound, Val, black('',_,_,''), Kbest,Vbest) => KeyFound=Kbest, Val=Vbest.
+lookup_ge(Key, KeyFound, Val, Tree, Kbest,Vbest) =>
+    tree_node_key(Tree,KA),
+    compare(Cmp,KA,Key),
+    lookup_ge_(Cmp,Key, KA, KeyFound,Val,Tree, Kbest,Vbest).
+
+lookup_ge_(>, K, KA, KeyFound, V, Tree, Kbest,Vbest) :-
+    tree_node_left(Tree,NTree),
+    min_key(KA, Tree, Kbest,Vbest, Kbest2,Vbest2), 
+    lookup_ge(K, KeyFound, V, NTree, Kbest2,Vbest2).
+lookup_ge_(<, K, _KA, KeyFound, V, Tree, Kbest,Vbest) :-
+    tree_node_right(Tree,NTree),
+    lookup_ge(K, KeyFound, V, NTree, Kbest,Vbest).
+lookup_ge_(=, _K, KA, KeyFound, V, Tree, _Kbest,_Vbest) :-
+    KeyFound = KA,
+    tree_node_value(Tree,V).
+
+min_key(K, T, Kbest,_,     K2,V2), K @< Kbest  => K2 = K, tree_node_value(T, V2).
+min_key(_, _, Kbest,Vbest, K2,V2) => K2 = Kbest, V2 = Vbest.
+
+tree_node_left(T, Left)   :- arg(1, T, Left).
+tree_node_key(T, Key)     :- arg(2, T, Key).
+tree_node_value(T, Value) :- arg(3, T, Value).
+tree_node_right(T, Right) :- arg(4, T, Right).
+
+
