@@ -84,6 +84,9 @@ visit_ge(black(L,K,V,R), Key0) --> !,
 
 rb_lookup_ge(_Key, _KeyFound, _Val, t(black('', A, B, ''), black('', A, B, ''))) => fail.
 rb_lookup_ge(Key, KeyFound, Val, T) =>
+    % TODO: avoid calling rb_max/3 by adding a flag as to whether a
+    %       left subtree has been visited and adjusting lookup_ge_/8
+    %       accordingly (see also the code for rb_max/3).
     rb_max(T, KA,VA),
     Key @=< KA,
     T = t(_,Tree),
@@ -109,12 +112,21 @@ lookup_ge_(=, _K, KA, KeyFound, V, Tree, _Kbest,_Vbest) :-
     KeyFound = KA,
     tree_node_value(Tree,V).
 
-min_key(K, T, Kbest,_,     K2,V2), K @< Kbest  => K2 = K, tree_node_value(T, V2).
+min_key(K, T, Kbest,_,     K2,V2), K @< Kbest => K2 = K, tree_node_value(T, V2).
 min_key(_, _, Kbest,Vbest, K2,V2) => K2 = Kbest, V2 = Vbest.
 
-tree_node_left(T, Left)   :- arg(1, T, Left).
-tree_node_key(T, Key)     :- arg(2, T, Key).
-tree_node_value(T, Value) :- arg(3, T, Value).
-tree_node_right(T, Right) :- arg(4, T, Right).
+tree_node_left(  red(L,_,_,_), L).
+tree_node_left(black(L,_,_,_), L).
 
+tree_node_key(  red(_,K,_,_), K).
+tree_node_key(black(_,K,_,_), K).
+
+tree_node_value(  red(_,_,V,_), V).
+tree_node_value(black(_,_,V,_), V).
+
+tree_node_right(  red(_,_,_,R), R).
+tree_node_right(black(_,_,_,R), R).
+
+tree_node_kv(  red(_,K,V,_), K,V).
+tree_node_kv(black(_,K,V,_), K,V).
 

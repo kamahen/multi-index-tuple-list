@@ -35,11 +35,11 @@ test(lookup_ge, KV == b-2) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(a, KV, T).
 test(lookup_ge, KV == b-2) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(b, KV, T).
-test(lookup_ge, KV == c-2) :-
+test(lookup_ge, KV == c-3) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(b2, KV, T).
-test(lookup_ge, KV == c-2) :-
+test(lookup_ge, KV == c-3) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(c, KV, T).
-test(lookup_ge, KV == d-2) :-
+test(lookup_ge, KV == d-4) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(c2, KV, T).
 test(lookup_ge, fail) :-
     list_to_rbtree([b-2,c-3,d-4], T), rb_lookup_ge(d2, _KV, T).
