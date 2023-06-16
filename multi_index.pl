@@ -5,7 +5,8 @@
 
 :- module(multi_index, [xrb_visit/2,
                         rb_visit_ge/3,
-                        rb_lookup_ge/4]).
+                        rb_lookup_ge/4,
+                        rb_in_ge/4]).
 
 :- encoding(utf8).
 
@@ -43,6 +44,27 @@ index_portray(Rbtree) :-
     !,
     rb_visit(Rbtree, Pairs),
     format('~p', [rbtree:Pairs]).
+
+% New predicate rb_in_ge(+Key, -KeyFound, -Val, Tree).
+
+rb_in_ge(KeyGe, Key, Val, t(_,Tree)) =>
+    enum_ge(Key, Val, Tree, KeyGe).
+
+enum_ge(Key, Val, black(L,K,V,R), KeyGe) =>
+    L \= '',
+    enum_cases_ge(Key, Val, L, K, V, R, KeyGe).
+enum_ge(Key, Val, red(L,K,V,R), KeyGe) =>
+    enum_cases_ge(Key, Val, L, K, V, R, KeyGe).
+enum_ge(_Key, _Val, _Tree, _KeyGe) => fail.
+
+enum_cases_ge(Key, Val, L, NodeKey, _, _, KeyGe) :-
+    Key @=< NodeKey,
+    enum_ge(Key, Val, L, KeyGe).
+enum_cases_ge(Key, Val, _, Key, Val, _, KeyGe) :-
+    Key @>= KeyGe.
+enum_cases_ge(Key, Val, _, _, _, R, KeyGe) :-
+    enum_ge(Key, Val, R, KeyGe).
+
 
 % Rewrite rb_visit/2 using DCGs:
 
