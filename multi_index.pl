@@ -104,38 +104,15 @@ visit_ge(black(L,K,V,R), Key0) --> !,
 
 % New predicate: rb_lookup_ge/4
 
-rb_lookup_ge(_Key, _KeyFound, _Val, t(black('', A, B, ''), black('', A, B, ''))) => fail.
-rb_lookup_ge(Key, KeyFound, Val, T) =>
-    % TODO: avoid calling rb_max/3 by adding a flag as to whether a
-    %       left subtree has been visited and adjusting lookup_ge_/8
-    %       accordingly (see also the code for rb_max/3).
-    rb_max(T, KA,VA),
-    Key @=< KA,
-    T = t(_,Tree),
-    lookup_ge(Key, KeyFound, Val, Tree, KA,VA).
+% There's a more efficient way of doing this deterministically, but
+% the code is more complex (see earlier versions of this module, which
+% have the detemrinistic code, although it would need some
+% modifications to be the best algorithm).
 
-% lookup_ge(+Key, -KeyFound, -Val, +Tree, +KBest, +VBest)
-%   KBest-VBest are the best key-value found so far
+rb_lookup_ge(Key, KeyFound, Val, T) :-
+    once(rb_in_ge(Key, KeyFound, Val, T)).
 
-lookup_ge(_Key, KeyFound, Val, black('',_,_,''), Kbest,Vbest) => KeyFound=Kbest, Val=Vbest.
-lookup_ge(Key, KeyFound, Val, Tree, Kbest,Vbest) =>
-    tree_node_key(Tree,KA),
-    compare(Cmp,KA,Key),
-    lookup_ge_(Cmp,Key, KA, KeyFound,Val,Tree, Kbest,Vbest).
-
-lookup_ge_(>, K, KA, KeyFound, V, Tree, Kbest,Vbest) :-
-    tree_node_left(Tree,NTree),
-    min_key(KA, Tree, Kbest,Vbest, Kbest2,Vbest2), 
-    lookup_ge(K, KeyFound, V, NTree, Kbest2,Vbest2).
-lookup_ge_(<, K, _KA, KeyFound, V, Tree, Kbest,Vbest) :-
-    tree_node_right(Tree,NTree),
-    lookup_ge(K, KeyFound, V, NTree, Kbest,Vbest).
-lookup_ge_(=, _K, KA, KeyFound, V, Tree, _Kbest,_Vbest) :-
-    KeyFound = KA,
-    tree_node_value(Tree,V).
-
-min_key(K, T, Kbest,_,     K2,V2), K @< Kbest => K2 = K, tree_node_value(T, V2).
-min_key(_, _, Kbest,Vbest, K2,V2) => K2 = Kbest, V2 = Vbest.
+:- if(false).
 
 tree_node_left(  red(L,_,_,_), L).
 tree_node_left(black(L,_,_,_), L).
@@ -151,4 +128,6 @@ tree_node_right(black(_,_,_,R), R).
 
 tree_node_kv(  red(_,K,V,_), K,V).
 tree_node_kv(black(_,K,V,_), K,V).
+
+:- endif.
 
